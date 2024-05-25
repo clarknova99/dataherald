@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [admin-console, engine, enterprise]
-        #service: [admin-console]
+        service: [admin-console, engine]
+        #service: [enterprise, slackbot]
     permissions:
       contents: read
       packages: write
@@ -32,6 +32,22 @@ jobs:
         username: "${{ github.actor }}"
         password: "${{ secrets.GHCR_PAT }}"
 
+    - name: Read version
+      id: read_version
+      run: |
+        VERSION=$(cat services/${{ matrix.service }}/version.txt)
+        echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+    - name: Increment version
+      id: increment_version
+      run: |
+        VERSION=${{ env.VERSION }}
+        IFS='.' read -r -a VERSION_PARTS <<< "$VERSION"
+        ((VERSION_PARTS[2]++))
+        NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.${VERSION_PARTS[2]}"
+        echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+        echo "${NEW_VERSION}" > services/${{ matrix.service }}/version.txt
+      shell: bash
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
@@ -40,8 +56,21 @@ jobs:
         file: ./services/${{ matrix.service }}/Dockerfile
         push: true
         tags: |
-          ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest
-          ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:${{ github.sha }}
-
+          ghcr.io/${{ github.repository_owner }}/dataherald-${{ matrix.service }}:latest
+          ghcr.io/${{ github.repository_owner }}/dataherald-${{ matrix.service }}:${{ github.sha }}
+          ghcr.io/${{ github.repository_owner }}/dataherald-${{ matrix.service }}:${{ env.NEW_VERSION }}
+          
+    - name: Commit and push new version
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add services/${{ matrix.service }}/version.txt
+        git commit -m "Increment version to ${{ env.NEW_VERSION }} for ${{ matrix.service }}"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Log out from GitHub Container Registry
       run: docker logout ghcr.io
+
+
+
