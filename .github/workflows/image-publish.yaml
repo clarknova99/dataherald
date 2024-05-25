@@ -36,15 +36,21 @@ jobs:
       id: read_version
       run: |
         VERSION=$(cat services/${{ matrix.service }}/version.txt)
+        echo "VERSION=${VERSION}"
         echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+    - name: Debug environment
+      run: env
 
     - name: Increment version
       id: increment_version
       run: |
         VERSION=${{ env.VERSION }}
+        echo "Current VERSION: $VERSION"
         IFS='.' read -r -a VERSION_PARTS <<< "$VERSION"
         ((VERSION_PARTS[2]++))
         NEW_VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.${VERSION_PARTS[2]}"
+        echo "NEW_VERSION=${NEW_VERSION}"
         echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
         echo "${NEW_VERSION}" > services/${{ matrix.service }}/version.txt
       shell: bash
@@ -69,6 +75,7 @@ jobs:
         git push
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Log out from GitHub Container Registry
       run: docker logout ghcr.io
 
