@@ -1,22 +1,25 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Build and Publish Docker Images
 
 on:
-    push:
-        branches:
-            - main
+  push:
+    branches:
+      - main
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     strategy:
-        matrix:
-            service: [admin-console, engine, enterprise, slack]
+      matrix:
+        service: [admin-console, engine, enterprise, slack]
+    permissions:
+      contents: read
+      packages: write
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
@@ -25,7 +28,7 @@ jobs:
       with:
         registry: ghcr.io
         username: "${{ github.actor }}"
-        password: "${{ secrets.GITHUB_TOKEN }}"
+        password: "${{ secrets.GHCR_PAT }}"
 
 
     - name: Build and push Docker image
