@@ -12,8 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        #service: [admin-console, engine, enterprise, slack]
-        service: [admin-console]
+        service: [admin-console, engine, enterprise, slack]
+        #service: [admin-console]
     permissions:
       contents: read
       packages: write
