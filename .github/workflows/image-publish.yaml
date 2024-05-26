@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [admin-console, engine]
+        service: [admin-console, engine, enterprise]
         #service: [enterprise, slackbot]
     permissions:
       contents: read
